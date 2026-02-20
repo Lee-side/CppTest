@@ -45,3 +45,4 @@ CppTest/
 - `demos/core_dump_cpp`：C++ + CMake 的 core dump 触发示例（A/B 继承与析构崩溃）。
 - `demos/dlopen_symbol_collision`：`dlopen` 顺序加载两个共享库，验证同名全局变量/函数的符号冲突与解析行为。
 - `demos/singleton_cpp`：C++ 单例写法合集（静态局部变量、堆区 + `call_once`），并包含导出 `.so` 时的进程级单例安全示例。
+- `demos/cpp_std_lab`：C++ 标准实验台（第一版），对比 C++17/20/23 下 `nth_element` 的可用性与结果一致性（`ranges` / fallback）。
