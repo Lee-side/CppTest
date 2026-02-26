@@ -20,6 +20,7 @@ constexpr int kSignalSlots = 64;
 struct SignalSpec {
   int sig;
   const char* name;
+  // 收到该信号后是否请求主循环退出（用于演示优雅退出）。
   bool request_exit;
 };
 
@@ -67,10 +68,30 @@ void AddSignal(std::vector<SignalSpec>& specs, int sig, const char* name, bool r
   specs.push_back({sig, name, request_exit});
 }
 
+/*
+ * 这个 Demo 按“应用常见信号场景”组织信号集合：
+ * 1) 生命周期与运维控制：SIGINT/SIGTERM/SIGQUIT/SIGHUP
+ *    - 常用于优雅退出、重载配置、人工中断。
+ * 2) 业务自定义控制：SIGUSR1/SIGUSR2
+ *    - 常用于打印运行状态、触发轻量运维动作。
+ * 3) 子进程与管道：SIGCHLD/SIGPIPE
+ *    - 前者用于回收子进程，后者表示向已关闭管道写数据。
+ * 4) 致命错误类：SIGSEGV/SIGBUS/SIGILL/SIGFPE/SIGABRT
+ *    - 实际工程里通常只做最小记录，然后尽快退出。
+ * 5) 不可捕获类：SIGKILL/SIGSTOP
+ *    - 这里故意尝试注册，便于演示“注册失败”。
+ *
+ * 如何测试（另一个终端）：
+ *   kill -TERM <pid>  # 模拟服务停止
+ *   kill -HUP  <pid>  # 模拟重载配置
+ *   kill -USR1 <pid>  # 模拟自定义控制
+ *   kill -KILL <pid>  # 演示不可捕获
+ */
 std::vector<SignalSpec> BuildSignalSpecs() {
   std::vector<SignalSpec> specs;
   // 这里列的是“常见信号集合”，是否存在取决于当前平台头文件定义。
 
+  // 生命周期/会话类信号。
 #ifdef SIGHUP
   AddSignal(specs, SIGHUP, "SIGHUP");
 #endif
@@ -80,6 +101,8 @@ std::vector<SignalSpec> BuildSignalSpecs() {
 #ifdef SIGQUIT
   AddSignal(specs, SIGQUIT, "SIGQUIT", true);
 #endif
+
+  // 致命错误与调试相关信号。
 #ifdef SIGILL
   AddSignal(specs, SIGILL, "SIGILL");
 #endif
@@ -99,6 +122,8 @@ std::vector<SignalSpec> BuildSignalSpecs() {
   // SIGKILL/SIGSTOP 理论上不可捕获，这里保留用于演示注册失败行为。
   AddSignal(specs, SIGKILL, "SIGKILL");
 #endif
+
+  // 业务自定义信号。
 #ifdef SIGUSR1
   AddSignal(specs, SIGUSR1, "SIGUSR1");
 #endif
@@ -114,6 +139,8 @@ std::vector<SignalSpec> BuildSignalSpecs() {
 #ifdef SIGALRM
   AddSignal(specs, SIGALRM, "SIGALRM");
 #endif
+
+  // 常见服务管理与子进程信号。
 #ifdef SIGTERM
   AddSignal(specs, SIGTERM, "SIGTERM", true);
 #endif
@@ -126,6 +153,8 @@ std::vector<SignalSpec> BuildSignalSpecs() {
 #ifdef SIGSTOP
   AddSignal(specs, SIGSTOP, "SIGSTOP");
 #endif
+
+  // 终端作业控制/资源限制/异步事件类。
 #ifdef SIGTSTP
   AddSignal(specs, SIGTSTP, "SIGTSTP");
 #endif
